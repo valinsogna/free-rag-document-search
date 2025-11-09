@@ -4,13 +4,20 @@ Nessun costo, tutto locale sul tuo PC!
 """
 
 import os
+import sys
 import warnings
 from pathlib import Path
 from typing import List
-import sys
-# Disabilita warning ChromaDB telemetry
-warnings.filterwarnings('ignore', message='.*telemetry.*')
+
+# Disabilita TUTTI i warning fastidiosi
+warnings.filterwarnings('ignore')
 os.environ['ANONYMIZED_TELEMETRY'] = 'False'
+os.environ['CHROMA_TELEMETRY'] = 'False'
+
+# Redirect stderr temporaneamente per ChromaDB
+import io
+_stderr = sys.stderr
+sys.stderr = io.StringIO()
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
@@ -221,7 +228,16 @@ def setup_nltk():
         ssl._create_default_https_context = _create_unverified_https_context
     
     # Download required packages silently
-    required_packages = ['punkt', 'punkt_tab', 'averaged_perceptron_tagger']
+    required_packages = packages = [
+    'punkt',
+    'punkt_tab',
+    'averaged_perceptron_tagger',
+    'averaged_perceptron_tagger_eng',
+    'wordnet',
+    'omw-1.4',
+    'stopwords',
+    'brown'
+]
     
     for package in required_packages:
         try:
@@ -260,23 +276,23 @@ def main():
     
     print("✅ Ollama trovato!\n")
     
-    # Configuration of docume ts path from input:
+    # Configuration
     if len(sys.argv) > 1:
         folder_path = sys.argv[1]
     else:
         print("📁 Inserisci il percorso della cartella da analizzare:")
-        print("   (Es: /Users/nome/Desktop/folder)")
+        print("   (Es: /Users/nome/Desktop/Scrivania)")
         print()
         folder_path = input("Percorso: ").strip()
     
     if not folder_path:
-        #Crea una cartella di default se non specificato che non sovrascrive nulla se già esistente
-        os.makedirs("./documents", exist_ok=True)
+        if not os.path.exists("./documents"):
+            os.makedirs("./documents")
         folder_path = "./documents"
         print(f"\n→ Uso cartella di default: {folder_path}\n")
-        
+
     DOCUMENTS_PATH = folder_path
-    MODEL_NAME = "llama3.2"  # Cambia: mistral, phi3, etc.
+    MODEL_NAME = "llama3.2"  # Cambia se vuoi: mistral, phi3, etc.
     
     # Initialize RAG
     rag = FreeLocalRAG(
