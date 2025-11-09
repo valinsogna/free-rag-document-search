@@ -253,7 +253,7 @@ Se hai problemi:
 # Setup completo in 4 comandi
 ollama pull nomic-embed-text
 ollama pull llama3.2
-pip install -r requirements_free.txt
+pip install -r requirements.txt
 python rag_free_ollama.py
 ```
 

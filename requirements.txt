@@ -13,6 +13,10 @@ unstructured==0.11.8
 # Utilities (GRATIS)
 tiktoken==0.5.2
 
+#Extra
+huminize
+setuptools
+
 # NESSUN COSTO - Tutto locale con Ollama!
 # Non serve OpenAI API key
 # Non serve pagare nulla
