@@ -1,6 +1,5 @@
 #!/bin/bash
 # Script Demo RAG per Video
-# Usa questo per la registrazione - mostra tutto step by step
 
 clear
 
@@ -40,7 +39,7 @@ echo "Premi INVIO per continuare..."
 read
 
 # Qui partirà il tuo RAG
-python rag_free_ollama.py
+python rag_free_ollama.py 
 
 echo ""
 echo "╔════════════════════════════════════════════════════════╗"
