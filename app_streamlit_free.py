@@ -319,26 +319,11 @@ def main():
         # Setup guide
         with st.expander("📖 Guida Setup Rapida"):
             st.markdown("""
-            ### Setup in 4 passi:
-            
-            1. **Installa Ollama:**
-               ```bash
-               # Vai su https://ollama.ai
-               ```
-            
-            2. **Scarica modelli:**
-               ```bash
-               ollama pull llama3.2
-               ollama pull nomic-embed-text
-               ```
-            
-            3. **Prepara documenti:**
-               ```bash
-               mkdir documents
-               # Copia i tuoi PDF, DOCX, TXT
-               ```
-            
-            4. **Inizializza e usa!**
+            Nella sidebar:
+            1. **Scrivi** il path completo nella casella
+            2. **Oppure** clicca "Desktop" o "Documents"
+            3. **Verifica** che mostri "✅ Cartella trovata"
+            4. **Clicca** "🚀 Inizializza Sistema RAG"
             """)
     
     # Footer
