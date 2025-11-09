@@ -19,7 +19,7 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-
+import sys
 
 class FreeLocalRAG:
     """RAG completamente gratuito usando Ollama"""
@@ -225,8 +225,20 @@ def main():
     
     print("✅ Ollama trovato!\n")
     
-    # Configuration
-    DOCUMENTS_PATH = "./documents"
+    # Configuration of docume ts path from input:
+    if len(sys.argv) > 1:
+        folder_path = sys.argv[1]
+    else:
+        print("📁 Inserisci il percorso della cartella da analizzare:")
+        print("   (Es: /Users/nome/Desktop/Scrivania)")
+        print()
+        folder_path = input("Percorso: ").strip()
+    
+    if not folder_path:
+        folder_path = "./documents"
+        print(f"\n→ Uso cartella di default: {folder_path}\n")
+        
+    DOCUMENTS_PATH = folder_path
     MODEL_NAME = "llama3.2"  # Cambia: mistral, phi3, etc.
     
     # Initialize RAG
