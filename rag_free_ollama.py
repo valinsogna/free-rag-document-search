@@ -4,8 +4,14 @@ Nessun costo, tutto locale sul tuo PC!
 """
 
 import os
+import warnings
 from pathlib import Path
 from typing import List
+
+# Disabilita warning ChromaDB telemetry
+warnings.filterwarnings('ignore', message='.*telemetry.*')
+os.environ['ANONYMIZED_TELEMETRY'] = 'False'
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     PyPDFLoader,
@@ -19,7 +25,6 @@ from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-import sys
 
 
 class FreeLocalRAG:
@@ -124,15 +129,15 @@ class FreeLocalRAG:
         """Setup the QA chain for querying"""
         
         template = """Usa i seguenti pezzi di contesto per rispondere alla domanda.
-            Se non conosci la risposta, di' semplicemente che non lo sai.
-            Rispondi in italiano in modo chiaro e conciso.
+Se non conosci la risposta, di' semplicemente che non lo sai.
+Rispondi in italiano in modo chiaro e conciso.
 
-            Contesto:
-            {context}
-            
-            Domanda: {question}
-            
-            Risposta:"""
+Contesto:
+{context}
+
+Domanda: {question}
+
+Risposta:"""
         
         QA_CHAIN_PROMPT = PromptTemplate(
             input_variables=["context", "question"],
@@ -203,12 +208,41 @@ def check_ollama_installed():
         return False
 
 
+def setup_nltk():
+    """Download required NLTK data"""
+    import nltk
+    import ssl
+    
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        pass
+    else:
+        ssl._create_default_https_context = _create_unverified_https_context
+    
+    # Download required packages silently
+    required_packages = ['punkt', 'punkt_tab', 'averaged_perceptron_tagger']
+    
+    for package in required_packages:
+        try:
+            nltk.data.find(f'tokenizers/{package}')
+        except LookupError:
+            try:
+                print(f"📥 Downloading NLTK {package}...")
+                nltk.download(package, quiet=True)
+            except:
+                pass  # Ignora errori, il sistema funzionerà comunque con PDF
+
+
 def main():
     """Main function"""
     
     print("="*60)
     print("🆓 RAG System 100% GRATUITO con Ollama")
     print("="*60 + "\n")
+    
+    # Setup NLTK
+    setup_nltk()
     
     # Check Ollama
     if not check_ollama_installed():
