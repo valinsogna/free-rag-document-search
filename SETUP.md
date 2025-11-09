@@ -90,12 +90,18 @@ venv\Scripts\activate
 # Installa dipendenze
 pip install -r requirements_free.txt
 ```
+Oppure runna il file `environment.yml` se usi conda + pip:
+```bash
+conda env create -f environment.yml
+conda activate rag
 
+python rag_free_ollama.py
+```
 ### 5️⃣ Prepara documenti
 
 ```bash
 mkdir documents
-# Copia i tuoi PDF, DOCX, TXT qui
+# Copia i tuoi PDF, DOCX, TXT qui o passali in input all'esecuzione dello script
 ```
 
 ### 6️⃣ Esegui il sistema
@@ -103,7 +109,10 @@ mkdir documents
 ```bash
 python rag_free_ollama.py
 ```
-
+OPPURE:
+```bash
+python rag_free_ollama.py /Users/dcouments
+```
 ---
 
 ## 🎮 Come Usare
