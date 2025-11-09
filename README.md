@@ -37,8 +37,6 @@ Oppure runna il file environment.yml se usi conda+Pip:
 conda env create -f environment.yml
 conda activate rag
 
-## 4. Esegui!
-```bash
 python rag_free_ollama.py
 ```
 ### OPPURE con interfaccia web:
