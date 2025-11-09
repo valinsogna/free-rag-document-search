@@ -25,9 +25,16 @@ ollama pull nomic-embed-text
 ```
 
 ## 3. Installa dipendenze Python
+Con pip:
 ```bash
 pip install -r requirements.txt
 ```
+
+Oppure runna il file environment.yml se usi conda+Pip:
+```bash
+conda env create -f environment.yml
+conda activate rag
+
 ## 4. Esegui!
 ```bash
 python rag_free_ollama.py

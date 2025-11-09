@@ -1,0 +1,17 @@
+name: rag
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  
+  # Tutti i pacchetti via pip (più veloce e affidabile)
+  - pip:
+    - langchain==0.1.0
+    - langchain-community==0.0.10
+    - chromadb==0.4.22
+    - pypdf==3.17.4
+    - python-docx==1.1.0
+    - unstructured==0.11.8
+    - tiktoken==0.5.2

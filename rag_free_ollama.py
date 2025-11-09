@@ -230,11 +230,13 @@ def main():
         folder_path = sys.argv[1]
     else:
         print("📁 Inserisci il percorso della cartella da analizzare:")
-        print("   (Es: /Users/nome/Desktop/Scrivania)")
+        print("   (Es: /Users/nome/Desktop/folder)")
         print()
         folder_path = input("Percorso: ").strip()
     
     if not folder_path:
+        #Crea una cartella di default se non specificato che non sovrascrive nulla se già esistente
+        os.makedirs("./documents", exist_ok=True)
         folder_path = "./documents"
         print(f"\n→ Uso cartella di default: {folder_path}\n")
         
