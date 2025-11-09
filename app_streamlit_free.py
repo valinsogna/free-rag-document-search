@@ -148,10 +148,49 @@ def main():
         """, unsafe_allow_html=True)
         
         # Documents path
+        st.subheader("📁 Cartella Documenti")
         docs_path = st.text_input(
-            "📁 Cartella documenti",
-            value="./documents"
+            "Inserisci il percorso completo della cartella",
+            value="",
+            placeholder="/Users/nome/Desktop/documenti",
+            help="Esempio: /Users/valeriainsogna/Desktop/caso_giuridico"
         )
+        
+        # Quick path buttons
+        st.caption("🔍 Percorsi comuni:")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            if st.button("📂 Desktop", use_container_width=True):
+                import os
+                desktop = os.path.expanduser("~/Desktop")
+                st.session_state.docs_path = desktop
+                st.rerun()
+        with col_b:
+            if st.button("📄 Documents", use_container_width=True):
+                import os
+                documents = os.path.expanduser("~/Documents")
+                st.session_state.docs_path = documents
+                st.rerun()
+        
+        # Use session state if set
+        if "docs_path" in st.session_state:
+            docs_path = st.session_state.docs_path
+        
+        # Show current path
+        if docs_path:
+            if Path(docs_path).exists():
+                st.success(f"✅ Cartella trovata: {docs_path}")
+                # Count files
+                try:
+                    files = list(Path(docs_path).rglob("*"))
+                    pdf_count = len([f for f in files if f.suffix == '.pdf'])
+                    docx_count = len([f for f in files if f.suffix in ['.docx', '.doc']])
+                    txt_count = len([f for f in files if f.suffix == '.txt'])
+                    st.info(f"📊 Trovati: {pdf_count} PDF, {docx_count} DOCX, {txt_count} TXT")
+                except:
+                    pass
+            else:
+                st.warning(f"⚠️ Cartella non trovata: {docs_path}")
         
         st.divider()
         
