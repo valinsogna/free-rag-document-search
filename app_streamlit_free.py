@@ -212,7 +212,6 @@ def main():
         
         Sistema RAG completamente locale
         
-        [GitHub](#) | [LinkedIn](#)
         """)
     
     # Main content
