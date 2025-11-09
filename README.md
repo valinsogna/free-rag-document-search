@@ -15,17 +15,17 @@ A production-ready Retrieval-Augmented Generation (RAG) system that enables natu
 🎯 AI Engineering portfolio project
 
 
-# 1. Installa Ollama da https://ollama.ai
+## 1. Installa Ollama da https://ollama.ai
 
-# 2. Scarica modelli (GRATIS!)
+## 2. Scarica modelli (GRATIS!)
 ollama pull llama3.2
 ollama pull nomic-embed-text
 
-# 3. Installa dipendenze Python
+## 3. Installa dipendenze Python
 pip install -r requirements.txt
 
-# 4. Esegui!
+## 4. Esegui!
 python rag_free_ollama.py
 
-# OPPURE con interfaccia web:
+## OPPURE con interfaccia web:
 streamlit run app_streamlit_free.py
