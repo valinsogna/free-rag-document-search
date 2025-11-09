@@ -7,7 +7,7 @@ import os
 import warnings
 from pathlib import Path
 from typing import List
-
+import sys
 # Disabilita warning ChromaDB telemetry
 warnings.filterwarnings('ignore', message='.*telemetry.*')
 os.environ['ANONYMIZED_TELEMETRY'] = 'False'
