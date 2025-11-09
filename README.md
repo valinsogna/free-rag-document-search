@@ -16,7 +16,7 @@ A production-ready Retrieval-Augmented Generation (RAG) system that enables natu
 🎯 AI Engineering portfolio project
 
 ## Come usarlo 
-Vedi file `SET_UP.md`
+Vedi file `SETUP.md`
 
 ### 1. Installa Ollama da https://ollama.ai
 
