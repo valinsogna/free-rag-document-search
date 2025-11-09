@@ -123,15 +123,15 @@ class FreeLocalRAG:
         """Setup the QA chain for querying"""
         
         template = """Usa i seguenti pezzi di contesto per rispondere alla domanda.
-Se non conosci la risposta, di' semplicemente che non lo sai.
-Rispondi in italiano in modo chiaro e conciso.
+            Se non conosci la risposta, di' semplicemente che non lo sai.
+            Rispondi in italiano in modo chiaro e conciso.
 
-Contesto:
-{context}
-
-Domanda: {question}
-
-Risposta:"""
+            Contesto:
+            {context}
+            
+            Domanda: {question}
+            
+            Risposta:"""
         
         QA_CHAIN_PROMPT = PromptTemplate(
             input_variables=["context", "question"],
