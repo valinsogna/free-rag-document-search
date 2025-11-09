@@ -165,6 +165,13 @@ retriever=self.vectorstore.as_retriever(
 # 3. Usa modello più leggero
 model_name="llama3.2"  # invece di llama3.1:8b
 ```
+---
+
+## Usa la modalità Web UI con Streamlit
+   ```bash
+   pip install streamlit
+   streamlit run app_streamlit_free.py
+   ```
 
 ---
 
@@ -198,24 +205,8 @@ ollama pull nomic-embed-text
 
 ---
 
-## 📊 Confronto Costi
-
-| Soluzione | Setup | Costo | Privacy | Offline |
-|-----------|-------|-------|---------|---------|
-| **Ollama (Questo!)** | 15 min | €0 | ✅ 100% | ✅ Sì |
-| OpenAI | 2 min | ~€10-50/mese | ❌ | ❌ No |
-| Anthropic (Claude) | 2 min | ~€15-60/mese | ❌ | ❌ No |
-
----
-
 
 ## 🔄 Prossimi Passi
-
-1. **Aggiungi Web UI:**
-   ```bash
-   pip install streamlit
-   streamlit run app_streamlit_free.py
-   ```
 
 2. **Deploy locale:**
    - Crea Docker container

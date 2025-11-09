@@ -6,7 +6,7 @@ A production-ready Retrieval-Augmented Generation (RAG) system that enables natu
 - 100% free - no API costs ever
 - Complete privacy - everything runs locally  
 - Multi-format support (PDF, DOCX, TXT)
-- Languages: italian, english mainly.
+- Languages: it's supposed to interacte in italian, but can understand english.
 - Vector embeddings with ChromaDB
 - Web UI with Streamlit
 - Offline-capable
