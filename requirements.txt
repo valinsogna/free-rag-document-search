@@ -1,27 +1,24 @@
-# Core RAG dependencies (FREE VERSION)
+# Core dependencies
 langchain==0.1.0
 langchain-community==0.0.10
-
-# Vector store (GRATIS)
 chromadb==0.4.22
-
-# Document loaders (GRATIS)
 pypdf==3.17.4
 python-docx==1.1.0
 unstructured==0.11.8
-
-# Utilities (GRATIS)
 tiktoken==0.5.2
 
-# #Extra
-# huminize
-# setuptools
+# For Streamlit UI
+streamlit==1.29.0
 
-# NESSUN COSTO - Tutto locale con Ollama!
-# Non serve OpenAI API key
-# Non serve pagare nulla
+# Optional: For HuggingFace alternative (no Ollama needed)
+# Uncomment these if you want to use HuggingFace models instead of Ollama
+# transformers==4.36.0
+# sentence-transformers==2.2.2
+# torch==2.1.0
+# accelerate==0.25.0
+# bitsandbytes==0.41.3  # For 8-bit quantization (GPU only)
 
-# Note: Devi installare Ollama separatamente:
-# https://ollama.ai
-
-# pip install pypdf==3.17.4 python-docx==1.1.0 unstructured==0.11.8
+# Optional: Better document parsing
+# pdfplumber==0.10.3
+# python-magic==0.4.27
+# pytesseract==0.3.10  # For OCR support
