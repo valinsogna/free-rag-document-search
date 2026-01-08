@@ -22,11 +22,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Core imports
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredWordDocumentLoader
 from langchain_community.vectorstores import Chroma
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+
 
 
 class ModelProvider(Enum):
@@ -449,44 +451,39 @@ class UniversalRAG:
             logger.info("✅ Vector store created!")
     
     def setup_qa_chain(self, k: int = 3):
-        """Setup the QA chain"""
+        """Setup the QA chain (LangChain 0.2+)"""
         if not self.vectorstore:
             raise ValueError("Vector store not initialized")
-        
-        # Provider-specific prompts
-        if self.model_config.provider == ModelProvider.ANTHROPIC:
-            template = """Human: Use this context to answer the question.
-Context: {context}
-Question: {question}
-Assistant: Based on the documents, """
-        elif self.model_config.provider == ModelProvider.GOOGLE:
-            template = """Context: {context}
-Question: {question}
-Answer based on the context: """
-        else:
-            template = """Use the following context to answer the question.
-If you don't know, say "I don't have enough information."
 
-Context: {context}
-Question: {question}
-Answer: """
-        
-        prompt = PromptTemplate(
-            input_variables=["context", "question"],
-            template=template
+        # Prompt base (chat-style, richiesto dai nuovi LLM)
+        prompt = ChatPromptTemplate.from_template(
+            """Use the following context to answer the question.
+            If you don't know the answer, say you don't know.
+
+            Context:
+            {context}
+
+            Question:
+            {input}
+
+            Answer:"""
         )
-        
-        self.qa_chain = RetrievalQA.from_chain_type(
+
+        retriever = self.vectorstore.as_retriever(search_kwargs={"k": k})
+
+        document_chain = create_stuff_documents_chain(
             llm=self.llm,
-            chain_type="stuff",
-            retriever=self.vectorstore.as_retriever(search_kwargs={"k": k}),
-            chain_type_kwargs={"prompt": prompt},
-            return_source_documents=True,
-            verbose=False
+            prompt=prompt
         )
-        
+
+        self.qa_chain = create_retrieval_chain(
+            retriever=retriever,
+            combine_docs_chain=document_chain
+        )
+
         if self.verbose:
             logger.info(f"📗 QA Chain ready (k={k})")
+
     
     def query(self, question: str, k: int = 3) -> Dict:
         """Query the RAG system"""
@@ -501,13 +498,16 @@ Answer: """
             self.qa_chain.retriever.search_kwargs["k"] = k
         
         # Execute
-        result = self.qa_chain({"query": question})
+        result = self.qa_chain.invoke({"input": question})
+        answer = result["answer"]
+        docs = result.get("context", [])
+
         
         # Estimate tokens (rough)
         input_tokens = len(question) / 4
-        for doc in result.get("source_documents", []):
+        for doc in docs:
             input_tokens += len(doc.page_content) / 4
-        output_tokens = len(result["result"]) / 4
+        output_tokens = len(answer) / 4
         
         self.total_input_tokens += input_tokens
         self.total_output_tokens += output_tokens
@@ -520,9 +520,9 @@ Answer: """
         
         # Format response
         response = {
-            "answer": result["result"],
+            "answer": answer,
+            "relevant_chunks": len(docs),
             "sources": [],
-            "relevant_chunks": len(result.get("source_documents", [])),
             "estimated_cost": cost,
             "total_cost": self.get_total_cost(),
             "model": self.model_config.model_name,
