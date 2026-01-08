@@ -1,13 +1,13 @@
 """
-Universal RAG System - Support for Free (Ollama/HuggingFace) and Commercial Models (OpenAI/Google/Anthropic)
-Seamlessly switch between free local models and premium cloud APIs
+Universal RAG System - Complete Implementation
+Support for Free (Ollama/HuggingFace) and Commercial Models (OpenAI/Google/Anthropic)
 """
 
 import os
 import sys
 import warnings
 from pathlib import Path
-from typing import List, Dict, Optional, Literal
+from typing import List, Dict, Optional
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -31,11 +31,8 @@ from langchain.prompts import PromptTemplate
 
 class ModelProvider(Enum):
     """Available model providers"""
-    # Free/Local
     OLLAMA = "ollama"
     HUGGINGFACE = "huggingface"
-    
-    # Commercial
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -52,8 +49,8 @@ class ModelConfig:
     api_key: Optional[str] = None
     temperature: float = 0.0
     max_tokens: int = 1024
-    cost_per_1k_input: float = 0.0  # in USD
-    cost_per_1k_output: float = 0.0  # in USD
+    cost_per_1k_input: float = 0.0
+    cost_per_1k_output: float = 0.0
 
 
 class ModelConfigurations:
@@ -63,17 +60,13 @@ class ModelConfigurations:
     OLLAMA_LLAMA = ModelConfig(
         provider=ModelProvider.OLLAMA,
         model_name="llama3.2",
-        embedding_model="nomic-embed-text",
-        cost_per_1k_input=0.0,
-        cost_per_1k_output=0.0
+        embedding_model="nomic-embed-text"
     )
     
     HUGGINGFACE_PHI = ModelConfig(
         provider=ModelProvider.HUGGINGFACE,
         model_name="microsoft/phi-2",
-        embedding_model="sentence-transformers/all-MiniLM-L6-v2",
-        cost_per_1k_input=0.0,
-        cost_per_1k_output=0.0
+        embedding_model="sentence-transformers/all-MiniLM-L6-v2"
     )
     
     # OpenAI Models
@@ -105,7 +98,7 @@ class ModelConfigurations:
     ANTHROPIC_HAIKU = ModelConfig(
         provider=ModelProvider.ANTHROPIC,
         model_name="claude-3-haiku-20240307",
-        embedding_model="voyage-2",  # Anthropic recommends Voyage AI
+        embedding_model="sentence-transformers/all-MiniLM-L6-v2",
         cost_per_1k_input=0.00025,
         cost_per_1k_output=0.00125
     )
@@ -113,7 +106,7 @@ class ModelConfigurations:
     ANTHROPIC_SONNET = ModelConfig(
         provider=ModelProvider.ANTHROPIC,
         model_name="claude-3-5-sonnet-20241022",
-        embedding_model="voyage-2",
+        embedding_model="sentence-transformers/all-MiniLM-L6-v2",
         cost_per_1k_input=0.003,
         cost_per_1k_output=0.015
     )
@@ -121,7 +114,7 @@ class ModelConfigurations:
     ANTHROPIC_OPUS = ModelConfig(
         provider=ModelProvider.ANTHROPIC,
         model_name="claude-3-opus-20240229",
-        embedding_model="voyage-2",
+        embedding_model="sentence-transformers/all-MiniLM-L6-v2",
         cost_per_1k_input=0.015,
         cost_per_1k_output=0.075
     )
@@ -142,32 +135,6 @@ class ModelConfigurations:
         cost_per_1k_input=0.00125,
         cost_per_1k_output=0.005
     )
-    
-    # Cohere Models
-    COHERE_COMMAND = ModelConfig(
-        provider=ModelProvider.COHERE,
-        model_name="command-r",
-        embedding_model="embed-english-v3.0",
-        cost_per_1k_input=0.0005,
-        cost_per_1k_output=0.0015
-    )
-    
-    # Mistral API Models
-    MISTRAL_SMALL = ModelConfig(
-        provider=ModelProvider.MISTRAL_API,
-        model_name="mistral-small-latest",
-        embedding_model="mistral-embed",
-        cost_per_1k_input=0.001,
-        cost_per_1k_output=0.003
-    )
-    
-    MISTRAL_LARGE = ModelConfig(
-        provider=ModelProvider.MISTRAL_API,
-        model_name="mistral-large-latest",
-        embedding_model="mistral-embed",
-        cost_per_1k_input=0.004,
-        cost_per_1k_output=0.012
-    )
 
 
 class BaseRAGProvider(ABC):
@@ -175,12 +142,10 @@ class BaseRAGProvider(ABC):
     
     @abstractmethod
     def get_llm(self, config: ModelConfig):
-        """Get the LLM instance"""
         pass
     
     @abstractmethod
     def get_embeddings(self, config: ModelConfig):
-        """Get the embeddings instance"""
         pass
 
 
@@ -204,173 +169,146 @@ class HuggingFaceProvider(BaseRAGProvider):
     """Provider for HuggingFace models"""
     
     def get_llm(self, config: ModelConfig):
-        from langchain_community.llms import HuggingFacePipeline
-        from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-        import torch
-        
-        tokenizer = AutoTokenizer.from_pretrained(config.model_name)
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model_name,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            device_map="auto" if torch.cuda.is_available() else None
-        )
-        
-        pipe = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=config.max_tokens,
-            temperature=config.temperature
-        )
-        
-        return HuggingFacePipeline(pipeline=pipe)
+        try:
+            from langchain_community.llms import HuggingFacePipeline
+            from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+            import torch
+            
+            tokenizer = AutoTokenizer.from_pretrained(config.model_name)
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
+                
+            model = AutoModelForCausalLM.from_pretrained(
+                config.model_name,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device_map="auto" if torch.cuda.is_available() else None,
+                trust_remote_code=True
+            )
+            
+            pipe = pipeline(
+                "text-generation",
+                model=model,
+                tokenizer=tokenizer,
+                max_new_tokens=config.max_tokens,
+                temperature=config.temperature,
+                do_sample=True,
+                top_p=0.95
+            )
+            
+            return HuggingFacePipeline(pipeline=pipe)
+        except ImportError:
+            raise ImportError("Install transformers: pip install transformers torch")
     
     def get_embeddings(self, config: ModelConfig):
-        from langchain_community.embeddings import HuggingFaceEmbeddings
-        return HuggingFaceEmbeddings(model_name=config.embedding_model)
+        try:
+            from langchain_community.embeddings import HuggingFaceEmbeddings
+            return HuggingFaceEmbeddings(model_name=config.embedding_model)
+        except ImportError:
+            raise ImportError("Install: pip install sentence-transformers")
 
 
 class OpenAIProvider(BaseRAGProvider):
     """Provider for OpenAI models"""
     
     def get_llm(self, config: ModelConfig):
-        from langchain_openai import ChatOpenAI
-        
-        if not config.api_key:
-            raise ValueError("OpenAI API key is required")
-        
-        return ChatOpenAI(
-            model=config.model_name,
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            api_key=config.api_key
-        )
+        try:
+            from langchain_openai import ChatOpenAI
+            
+            if not config.api_key:
+                config.api_key = os.getenv("OPENAI_API_KEY")
+                if not config.api_key:
+                    raise ValueError("OpenAI API key required")
+            
+            return ChatOpenAI(
+                model=config.model_name,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                api_key=config.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install langchain-openai")
     
     def get_embeddings(self, config: ModelConfig):
-        from langchain_openai import OpenAIEmbeddings
-        
-        if not config.api_key:
-            raise ValueError("OpenAI API key is required")
-        
-        return OpenAIEmbeddings(
-            model=config.embedding_model,
-            api_key=config.api_key
-        )
+        try:
+            from langchain_openai import OpenAIEmbeddings
+            
+            if not config.api_key:
+                config.api_key = os.getenv("OPENAI_API_KEY")
+                if not config.api_key:
+                    raise ValueError("OpenAI API key required")
+            
+            return OpenAIEmbeddings(
+                model=config.embedding_model,
+                api_key=config.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install langchain-openai")
 
 
 class AnthropicProvider(BaseRAGProvider):
     """Provider for Anthropic Claude models"""
     
     def get_llm(self, config: ModelConfig):
-        from langchain_anthropic import ChatAnthropic
-        
-        if not config.api_key:
-            raise ValueError("Anthropic API key is required")
-        
-        return ChatAnthropic(
-            model=config.model_name,
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            anthropic_api_key=config.api_key
-        )
+        try:
+            from langchain_anthropic import ChatAnthropic
+            
+            if not config.api_key:
+                config.api_key = os.getenv("ANTHROPIC_API_KEY")
+                if not config.api_key:
+                    raise ValueError("Anthropic API key required")
+            
+            return ChatAnthropic(
+                model=config.model_name,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                anthropic_api_key=config.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install langchain-anthropic")
     
     def get_embeddings(self, config: ModelConfig):
-        # Anthropic doesn't provide embeddings, use Voyage AI or OpenAI
-        try:
-            from langchain_voyageai import VoyageAIEmbeddings
-            return VoyageAIEmbeddings(
-                model=config.embedding_model,
-                voyage_api_key=os.getenv("VOYAGE_API_KEY")
-            )
-        except:
-            # Fallback to HuggingFace embeddings
-            from langchain_community.embeddings import HuggingFaceEmbeddings
-            logger.warning("Using HuggingFace embeddings as fallback for Anthropic")
-            return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        # Anthropic doesn't provide embeddings, use HuggingFace
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        logger.warning("Using HuggingFace embeddings for Anthropic")
+        return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 
 class GoogleProvider(BaseRAGProvider):
     """Provider for Google Gemini models"""
     
     def get_llm(self, config: ModelConfig):
-        from langchain_google_genai import ChatGoogleGenerativeAI
-        
-        if not config.api_key:
-            raise ValueError("Google API key is required")
-        
-        return ChatGoogleGenerativeAI(
-            model=config.model_name,
-            temperature=config.temperature,
-            max_output_tokens=config.max_tokens,
-            google_api_key=config.api_key
-        )
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            
+            if not config.api_key:
+                config.api_key = os.getenv("GOOGLE_API_KEY")
+                if not config.api_key:
+                    raise ValueError("Google API key required")
+            
+            return ChatGoogleGenerativeAI(
+                model=config.model_name,
+                temperature=config.temperature,
+                max_output_tokens=config.max_tokens,
+                google_api_key=config.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install langchain-google-genai")
     
     def get_embeddings(self, config: ModelConfig):
-        from langchain_google_genai import GoogleGenerativeAIEmbeddings
-        
-        if not config.api_key:
-            raise ValueError("Google API key is required")
-        
-        return GoogleGenerativeAIEmbeddings(
-            model=config.embedding_model,
-            google_api_key=config.api_key
-        )
-
-
-class CohereProvider(BaseRAGProvider):
-    """Provider for Cohere models"""
-    
-    def get_llm(self, config: ModelConfig):
-        from langchain_cohere import ChatCohere
-        
-        if not config.api_key:
-            raise ValueError("Cohere API key is required")
-        
-        return ChatCohere(
-            model=config.model_name,
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            cohere_api_key=config.api_key
-        )
-    
-    def get_embeddings(self, config: ModelConfig):
-        from langchain_cohere import CohereEmbeddings
-        
-        if not config.api_key:
-            raise ValueError("Cohere API key is required")
-        
-        return CohereEmbeddings(
-            model=config.embedding_model,
-            cohere_api_key=config.api_key
-        )
-
-
-class MistralAPIProvider(BaseRAGProvider):
-    """Provider for Mistral API models"""
-    
-    def get_llm(self, config: ModelConfig):
-        from langchain_mistralai import ChatMistralAI
-        
-        if not config.api_key:
-            raise ValueError("Mistral API key is required")
-        
-        return ChatMistralAI(
-            model=config.model_name,
-            temperature=config.temperature,
-            max_tokens=config.max_tokens,
-            mistral_api_key=config.api_key
-        )
-    
-    def get_embeddings(self, config: ModelConfig):
-        from langchain_mistralai import MistralAIEmbeddings
-        
-        if not config.api_key:
-            raise ValueError("Mistral API key is required")
-        
-        return MistralAIEmbeddings(
-            model=config.embedding_model,
-            mistral_api_key=config.api_key
-        )
+        try:
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+            
+            if not config.api_key:
+                config.api_key = os.getenv("GOOGLE_API_KEY")
+                if not config.api_key:
+                    raise ValueError("Google API key required")
+            
+            return GoogleGenerativeAIEmbeddings(
+                model=config.embedding_model,
+                google_api_key=config.api_key
+            )
+        except ImportError:
+            raise ImportError("Install: pip install langchain-google-genai")
 
 
 class UniversalRAG:
@@ -381,9 +319,7 @@ class UniversalRAG:
         ModelProvider.HUGGINGFACE: HuggingFaceProvider(),
         ModelProvider.OPENAI: OpenAIProvider(),
         ModelProvider.ANTHROPIC: AnthropicProvider(),
-        ModelProvider.GOOGLE: GoogleProvider(),
-        ModelProvider.COHERE: CohereProvider(),
-        ModelProvider.MISTRAL_API: MistralAPIProvider()
+        ModelProvider.GOOGLE: GoogleProvider()
     }
     
     def __init__(
@@ -395,17 +331,7 @@ class UniversalRAG:
         chunk_overlap: int = 200,
         verbose: bool = True
     ):
-        """
-        Initialize Universal RAG System
-        
-        Args:
-            documents_path: Path to documents folder
-            model_config: Model configuration object
-            persist_directory: Where to store vector database
-            chunk_size: Size of text chunks
-            chunk_overlap: Overlap between chunks
-            verbose: Enable verbose logging
-        """
+        """Initialize Universal RAG System"""
         self.documents_path = Path(documents_path)
         self.model_config = model_config
         self.persist_directory = persist_directory
@@ -413,30 +339,29 @@ class UniversalRAG:
         self.chunk_overlap = chunk_overlap
         self.verbose = verbose
         
-        # Token usage tracking for cost calculation
+        # Cost tracking
         self.total_input_tokens = 0
         self.total_output_tokens = 0
         
-        # Validate documents path
+        # Validate
         if not self.documents_path.exists():
-            raise ValueError(f"Documents path does not exist: {documents_path}")
+            raise ValueError(f"Path not found: {documents_path}")
         
-        # Get provider
         if model_config.provider not in self.PROVIDERS:
             raise ValueError(f"Unsupported provider: {model_config.provider}")
         
         self.provider = self.PROVIDERS[model_config.provider]
         
-        # Initialize components
+        # Components
         self.llm = None
         self.embeddings = None
         self.vectorstore = None
         self.qa_chain = None
         
         if verbose:
-            logger.info(f"Initializing {model_config.provider.value} with model: {model_config.model_name}")
+            logger.info(f"Using {model_config.provider.value} - {model_config.model_name}")
             if model_config.cost_per_1k_input > 0:
-                logger.info(f"💰 Cost: ${model_config.cost_per_1k_input:.4f}/1K input, ${model_config.cost_per_1k_output:.4f}/1K output")
+                logger.info(f"💰 Costs: ${model_config.cost_per_1k_input:.4f}/1K in, ${model_config.cost_per_1k_output:.4f}/1K out")
     
     def _initialize_models(self):
         """Initialize LLM and embeddings"""
@@ -445,9 +370,9 @@ class UniversalRAG:
             self.embeddings = self.provider.get_embeddings(self.model_config)
             
             if self.verbose:
-                logger.info("✅ Models initialized successfully")
+                logger.info("✅ Models initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize models: {str(e)}")
+            logger.error(f"Failed to initialize: {str(e)}")
             raise
     
     def load_documents(self) -> List:
@@ -462,42 +387,41 @@ class UniversalRAG:
         }
         
         if self.verbose:
-            logger.info(f"📁 Scanning directory: {self.documents_path}")
+            logger.info(f"📁 Scanning: {self.documents_path}")
         
         file_count = 0
         for file_path in self.documents_path.rglob('*'):
             if file_path.is_file():
-                extension = file_path.suffix.lower()
+                ext = file_path.suffix.lower()
                 
-                if extension in loaders_map:
+                if ext in loaders_map:
                     file_count += 1
                     try:
-                        loader_class = loaders_map[extension]
-                        loader = loader_class(str(file_path))
+                        loader = loaders_map[ext](str(file_path))
                         docs = loader.load()
                         
                         for doc in docs:
                             doc.metadata['source'] = str(file_path)
                             doc.metadata['filename'] = file_path.name
-                            doc.metadata['file_type'] = extension[1:]
+                            doc.metadata['file_type'] = ext[1:]
                         
                         documents.extend(docs)
                         
                         if self.verbose:
-                            logger.info(f"✅ Loaded: {file_path.name} ({len(docs)} pages)")
+                            logger.info(f"✅ Loaded: {file_path.name}")
                     
                     except Exception as e:
-                        logger.error(f"❌ Error loading {file_path.name}: {str(e)}")
+                        logger.error(f"❌ Error: {file_path.name}: {str(e)}")
         
         if self.verbose:
-            logger.info(f"📊 Total files: {file_count}, Document chunks: {len(documents)}")
+            logger.info(f"📊 Total files: {file_count}, chunks: {len(documents)}")
         
         return documents
     
     def create_vector_store(self, documents: List):
         """Create vector store from documents"""
         if self.verbose:
-            logger.info("📄 Splitting documents into chunks...")
+            logger.info("📄 Splitting documents...")
         
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
@@ -509,14 +433,8 @@ class UniversalRAG:
         texts = text_splitter.split_documents(documents)
         
         if self.verbose:
-            logger.info(f"📊 Created {len(texts)} text chunks")
+            logger.info(f"📊 Created {len(texts)} chunks")
             logger.info("🧠 Creating embeddings...")
-            if self.model_config.cost_per_1k_input > 0:
-                # Estimate embedding costs
-                total_chars = sum(len(t.page_content) for t in texts)
-                estimated_tokens = total_chars / 4  # Rough estimate
-                cost = (estimated_tokens / 1000) * self.model_config.cost_per_1k_input * 0.1  # Embeddings are cheaper
-                logger.info(f"💰 Estimated embedding cost: ${cost:.4f}")
         
         self.vectorstore = Chroma.from_documents(
             documents=texts,
@@ -528,20 +446,298 @@ class UniversalRAG:
         self.vectorstore.persist()
         
         if self.verbose:
-            logger.info("✅ Vector store created and persisted!")
+            logger.info("✅ Vector store created!")
     
     def setup_qa_chain(self, k: int = 3):
         """Setup the QA chain"""
         if not self.vectorstore:
             raise ValueError("Vector store not initialized")
         
-        # Provider-specific prompt templates
+        # Provider-specific prompts
         if self.model_config.provider == ModelProvider.ANTHROPIC:
-            template = """Human: You are a helpful assistant analyzing documents. 
-Use the following context to answer the question.
-If you don't know the answer based on the context, say "I don't have enough information in the documents to answer this question."
-
-Context:
-{context}
-
+            template = """Human: Use this context to answer the question.
+Context: {context}
 Question: {question}
+Assistant: Based on the documents, """
+        elif self.model_config.provider == ModelProvider.GOOGLE:
+            template = """Context: {context}
+Question: {question}
+Answer based on the context: """
+        else:
+            template = """Use the following context to answer the question.
+If you don't know, say "I don't have enough information."
+
+Context: {context}
+Question: {question}
+Answer: """
+        
+        prompt = PromptTemplate(
+            input_variables=["context", "question"],
+            template=template
+        )
+        
+        self.qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.vectorstore.as_retriever(search_kwargs={"k": k}),
+            chain_type_kwargs={"prompt": prompt},
+            return_source_documents=True,
+            verbose=False
+        )
+        
+        if self.verbose:
+            logger.info(f"📗 QA Chain ready (k={k})")
+    
+    def query(self, question: str, k: int = 3) -> Dict:
+        """Query the RAG system"""
+        if not self.qa_chain:
+            raise ValueError("Not initialized. Run initialize() first")
+        
+        if self.verbose:
+            logger.info(f"🤔 Query: {question[:50]}...")
+        
+        # Update k if different
+        if k != self.qa_chain.retriever.search_kwargs.get("k", 3):
+            self.qa_chain.retriever.search_kwargs["k"] = k
+        
+        # Execute
+        result = self.qa_chain({"query": question})
+        
+        # Estimate tokens (rough)
+        input_tokens = len(question) / 4
+        for doc in result.get("source_documents", []):
+            input_tokens += len(doc.page_content) / 4
+        output_tokens = len(result["result"]) / 4
+        
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+        
+        # Calculate cost
+        cost = (
+            (input_tokens / 1000) * self.model_config.cost_per_1k_input +
+            (output_tokens / 1000) * self.model_config.cost_per_1k_output
+        )
+        
+        # Format response
+        response = {
+            "answer": result["result"],
+            "sources": [],
+            "relevant_chunks": len(result.get("source_documents", [])),
+            "estimated_cost": cost,
+            "total_cost": self.get_total_cost(),
+            "model": self.model_config.model_name,
+            "provider": self.model_config.provider.value
+        }
+        
+        # Process sources
+        seen = set()
+        for doc in result.get("source_documents", []):
+            filename = doc.metadata.get("filename", "Unknown")
+            if filename not in seen:
+                seen.add(filename)
+                response["sources"].append({
+                    "filename": filename,
+                    "file_type": doc.metadata.get("file_type", "unknown"),
+                    "preview": doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content
+                })
+        
+        if self.verbose and cost > 0:
+            logger.info(f"💰 Query cost: ${cost:.6f}")
+        
+        return response
+    
+    def get_total_cost(self) -> float:
+        """Get total accumulated cost"""
+        return (
+            (self.total_input_tokens / 1000) * self.model_config.cost_per_1k_input +
+            (self.total_output_tokens / 1000) * self.model_config.cost_per_1k_output
+        )
+    
+    def initialize(self) -> bool:
+        """Complete initialization"""
+        try:
+            if self.verbose:
+                logger.info("🚀 Initializing RAG System...")
+            
+            self._initialize_models()
+            
+            documents = self.load_documents()
+            if not documents:
+                logger.error("No documents found!")
+                return False
+            
+            self.create_vector_store(documents)
+            self.setup_qa_chain()
+            
+            if self.verbose:
+                logger.info("✅ Ready!")
+                if self.model_config.cost_per_1k_input > 0:
+                    logger.info("💰 Using paid model - tracking costs")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed: {str(e)}")
+            return False
+    
+    def switch_model(self, new_config: ModelConfig):
+        """Switch to different model without recreating vector store"""
+        if self.verbose:
+            logger.info(f"Switching to {new_config.model_name}")
+        
+        self.model_config = new_config
+        self._initialize_models()
+        
+        if self.vectorstore:
+            self.setup_qa_chain()
+        
+        if self.verbose:
+            logger.info(f"✅ Switched to {new_config.model_name}")
+
+
+def main():
+    """Interactive CLI"""
+    import sys
+    from getpass import getpass
+    
+    print("=" * 60)
+    print("🌍 UNIVERSAL RAG SYSTEM")
+    print("=" * 60 + "\n")
+    
+    # Get documents path
+    if len(sys.argv) > 1:
+        docs_path = sys.argv[1]
+    else:
+        docs_path = input("📁 Documents path: ").strip()
+    
+    if not Path(docs_path).exists():
+        print(f"❌ Path not found: {docs_path}")
+        return
+    
+    # Select provider
+    print("\n🎯 Select Provider:")
+    print("1. FREE Local (Ollama/HuggingFace)")
+    print("2. OpenAI")
+    print("3. Anthropic")
+    print("4. Google")
+    
+    choice = input("\nChoice (1-4): ").strip()
+    
+    config = None
+    
+    if choice == "1":
+        print("\n🆓 FREE Models:")
+        print("1. Ollama Llama 3.2")
+        print("2. HuggingFace Phi-2")
+        
+        model_choice = input("Choice: ").strip()
+        
+        if model_choice == "1":
+            config = ModelConfigurations.OLLAMA_LLAMA
+        else:
+            config = ModelConfigurations.HUGGINGFACE_PHI
+    
+    elif choice == "2":
+        api_key = getpass("🔑 OpenAI API key: ").strip()
+        
+        print("\n1. GPT-3.5 ($0.0005/1K)")
+        print("2. GPT-4 ($0.01/1K)")
+        print("3. GPT-4o ($0.005/1K)")
+        
+        model_choice = input("Choice: ").strip()
+        
+        if model_choice == "1":
+            config = ModelConfigurations.OPENAI_GPT35
+        elif model_choice == "2":
+            config = ModelConfigurations.OPENAI_GPT4
+        else:
+            config = ModelConfigurations.OPENAI_GPT4O
+        
+        config.api_key = api_key
+    
+    elif choice == "3":
+        api_key = getpass("🔑 Anthropic API key: ").strip()
+        
+        print("\n1. Haiku ($0.00025/1K)")
+        print("2. Sonnet ($0.003/1K)")
+        print("3. Opus ($0.015/1K)")
+        
+        model_choice = input("Choice: ").strip()
+        
+        if model_choice == "1":
+            config = ModelConfigurations.ANTHROPIC_HAIKU
+        elif model_choice == "2":
+            config = ModelConfigurations.ANTHROPIC_SONNET
+        else:
+            config = ModelConfigurations.ANTHROPIC_OPUS
+        
+        config.api_key = api_key
+    
+    elif choice == "4":
+        api_key = getpass("🔑 Google API key: ").strip()
+        
+        print("\n1. Gemini Flash ($0.000075/1K)")
+        print("2. Gemini Pro ($0.00125/1K)")
+        
+        model_choice = input("Choice: ").strip()
+        
+        if model_choice == "1":
+            config = ModelConfigurations.GOOGLE_GEMINI_FLASH
+        else:
+            config = ModelConfigurations.GOOGLE_GEMINI_PRO
+        
+        config.api_key = api_key
+    
+    if not config:
+        print("❌ No model selected")
+        return
+    
+    # Initialize
+    print(f"\n🔄 Initializing {config.model_name}...")
+    
+    rag = UniversalRAG(
+        documents_path=docs_path,
+        model_config=config,
+        verbose=True
+    )
+    
+    if not rag.initialize():
+        return
+    
+    # Query loop
+    print("\n" + "=" * 60)
+    print("💬 Ready! ('exit' to quit, 'cost' for total)")
+    print("=" * 60 + "\n")
+    
+    while True:
+        question = input("❓ Question: ").strip()
+        
+        if question.lower() in ['exit', 'quit', 'q']:
+            if rag.get_total_cost() > 0:
+                print(f"\n💰 Total cost: ${rag.get_total_cost():.6f}")
+            break
+        
+        if question.lower() == 'cost':
+            print(f"💰 Current cost: ${rag.get_total_cost():.6f}\n")
+            continue
+        
+        if not question:
+            continue
+        
+        try:
+            result = rag.query(question)
+            
+            print(f"\n💡 Answer: {result['answer']}\n")
+            print(f"📚 Sources: {', '.join(s['filename'] for s in result['sources'])}")
+            
+            if result['estimated_cost'] > 0:
+                print(f"💰 Cost: ${result['estimated_cost']:.6f} (Total: ${result['total_cost']:.6f})")
+            
+            print("-" * 60 + "\n")
+        
+        except Exception as e:
+            print(f"❌ Error: {str(e)}\n")
+
+
+if __name__ == "__main__":
+    main()
