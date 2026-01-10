@@ -1,76 +1,65 @@
-# Core RAG dependencies
-langchain==0.1.0
-langchain-community==0.0.10
-chromadb==0.4.22
-pypdf==3.17.4
-python-docx==1.1.0
-unstructured==0.11.8
-tiktoken==0.5.2
+# ============================================================
+# Universal RAG System - Requirements
+# Compatible with Python 3.9-3.11 (3.11 recommended)
+# ============================================================
 
-# Web UI
-streamlit==1.29.0
-pandas==2.1.0
+# ============================================================
+# LANGCHAIN STACK (v0.3.x)
+# ============================================================
+langchain>=0.3.14
+langchain-core>=0.3.29
+langchain-community>=0.3.14
+langchain-text-splitters>=0.3.4
 
-# ============================================
-# PROVIDER-SPECIFIC DEPENDENCIES
-# Uncomment the sections you need
-# ============================================
+# ============================================================
+# VECTOR STORE
+# ============================================================
+chromadb>=0.5.0
 
-# ----------------
-# FREE MODELS
-# ----------------
+# ============================================================
+# DOCUMENT LOADERS
+# ============================================================
+pypdf>=4.0.0
+python-docx>=1.1.0
+unstructured>=0.16.0
 
-# For HuggingFace models (no Ollama needed)
-# transformers==4.36.0
-# sentence-transformers==2.2.2
-# torch==2.1.0
-# accelerate==0.25.0
-# bitsandbytes==0.41.3  # For 8-bit quantization (optional, GPU only)
+# ============================================================
+# EMBEDDINGS & TOKENIZATION
+# ============================================================
+tiktoken>=0.7.0
+sentence-transformers>=3.0.0
 
-# ----------------
-# OPENAI
-# ----------------
-# langchain-openai==0.0.5
-# openai==1.10.0
+# ============================================================
+# WEB INTERFACE
+# ============================================================
+streamlit>=1.40.0
 
-# ----------------
-# ANTHROPIC
-# ----------------
-# langchain-anthropic==0.1.1
-# anthropic==0.18.0
+# ============================================================
+# DATA PROCESSING
+# ============================================================
+numpy
+pandas
 
-# ----------------
-# GOOGLE
-# ----------------
-# langchain-google-genai==0.0.6
-# google-generativeai==0.3.2
+# ============================================================
+# MODEL PROVIDERS
+# Uncomment only the providers you need to reduce install time
+# ============================================================
 
-# ----------------
-# COHERE
-# ----------------
-# langchain-cohere==0.1.0
-# cohere==4.47.0
+# FREE: HuggingFace (local models)
+langchain-huggingface>=0.1.0
+transformers>=4.40.0
+torch>=2.0.0
 
-# ----------------
-# MISTRAL
-# ----------------
-# langchain-mistralai==0.0.3
-# mistralai==0.0.8
+# PREMIUM: OpenAI (GPT-3.5, GPT-4, GPT-4o)
+langchain-openai>=0.2.0
 
-# ----------------
-# VOYAGE (for Anthropic embeddings)
-# ----------------
-# voyageai==0.2.1
+# PREMIUM: Anthropic (Claude Haiku, Sonnet, Opus)
+langchain-anthropic>=0.3.0
 
-# ----------------
-# ALL PROVIDERS (convenience install)
-# ----------------
-# To install everything at once, uncomment this block:
-# langchain-openai==0.0.5
-# langchain-anthropic==0.1.1
-# langchain-google-genai==0.0.6
-# langchain-cohere==0.1.0
-# langchain-mistralai==0.0.3
-# transformers==4.36.0
-# sentence-transformers==2.2.2
-# torch==2.1.0
+# PREMIUM: Google (Gemini Flash, Pro)
+langchain-google-genai>=2.0.0
+
+# ============================================================
+# UTILITIES
+# ============================================================
+python-dotenv>=1.0.0

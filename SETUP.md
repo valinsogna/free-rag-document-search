@@ -1,370 +1,454 @@
-# 🌍 Universal RAG System - Setup Guide
+# 🛠️ Setup Guide - Universal RAG System
 
-Complete guide for using FREE local models and/or premium API models (OpenAI, Anthropic, Google).
+Complete installation and configuration guide for the Universal RAG Document Search System.
 
-## 📊 Quick Cost Comparison
+## 📋 Table of Contents
 
-| Model | Provider | Input $/1K | Output $/1K | Monthly Cost* | Quality |
-|-------|----------|------------|-------------|--------------|---------|
-| **Llama 3.2** | Ollama | $0 | $0 | **$0** | ⭐⭐⭐ |
-| **Phi-2** | HuggingFace | $0 | $0 | **$0** | ⭐⭐⭐ |
-| **Gemini Flash** | Google | $0.000075 | $0.0003 | **~$0.11** | ⭐⭐⭐⭐ |
-| **Claude Haiku** | Anthropic | $0.00025 | $0.00125 | **~$0.42** | ⭐⭐⭐⭐ |
-| **GPT-3.5** | OpenAI | $0.0005 | $0.0015 | **~$0.60** | ⭐⭐⭐⭐ |
-| **Claude Sonnet** | Anthropic | $0.003 | $0.015 | **~$5.40** | ⭐⭐⭐⭐⭐ |
-| **GPT-4o** | OpenAI | $0.005 | $0.015 | **~$6.00** | ⭐⭐⭐⭐⭐ |
-| **GPT-4 Turbo** | OpenAI | $0.01 | $0.03 | **~$10.20** | ⭐⭐⭐⭐⭐ |
+- [Requirements](#-requirements)
+- [Quick Setup](#-quick-setup)
+- [Detailed Installation](#-detailed-installation)
+- [Model Setup by Provider](#-model-setup-by-provider)
+- [Running the Application](#-running-the-application)
+- [Configuration Options](#-configuration-options)
+- [Troubleshooting](#-troubleshooting)
 
-*Monthly estimates based on 10 queries/day
+---
 
-## 🚀 Quick Start
+## 📋 Requirements
 
-### Option 1: FREE Local Models (Recommended for Development)
+### System Requirements
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Python | 3.9 | 3.11 |
+| RAM | 8GB | 16GB |
+| Disk Space | 5GB | 15GB |
+| OS | Windows/Mac/Linux | Any |
+
+### Software Dependencies
+
+- **Python 3.9-3.11** (3.11 recommended)
+- **Conda** (recommended) or pip
+- **Ollama** (for free local models) - optional
+- **Git** (for cloning repository)
+
+---
+
+## 🚀 Quick Setup
+
+### One-liner Setup (Conda)
 
 ```bash
-# Install base dependencies
-pip install -r requirements.txt
-
-# For HuggingFace models (no Ollama needed!)
-pip install transformers sentence-transformers torch
-
-# Run with HuggingFace
-python rag_complete.py /path/to/documents
-# Select "1" for FREE models, then "2" for HuggingFace
+# Clone, create environment, and activate
+git clone https://github.com/yourusername/universal-rag-system.git && \
+cd universal-rag-system && \
+conda env create -f environment.yml && \
+conda activate rag
 ```
 
-### Option 2: With Ollama (Alternative Free Option)
+### Minimal Setup (pip)
 
 ```bash
-# Install Ollama from https://ollama.ai
-ollama pull llama3.2
+git clone https://github.com/yourusername/universal-rag-system.git
+cd universal-rag-system
+pip install langchain langchain-community chromadb streamlit pypdf python-docx
+```
+
+---
+
+## 📦 Detailed Installation
+
+### Step 1: Clone Repository
+
+```bash
+git clone https://github.com/yourusername/universal-rag-system.git
+cd universal-rag-system
+```
+
+### Step 2: Create Python Environment
+
+#### Option A: Using Conda (Recommended)
+
+```bash
+# Create environment from file
+conda env create -f environment.yml
+
+# Activate environment
+conda activate rag
+```
+
+#### Option B: Using pip + venv
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (Linux/Mac)
+source venv/bin/activate
+
+# Activate (Windows)
+venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Step 3: Verify Installation
+
+```bash
+# Check LangChain versions
+pip list | grep langchain
+
+# Expected output:
+# langchain              0.3.x
+# langchain-community    0.3.x
+# langchain-core         0.3.x
+# langchain-text-splitters 0.3.x
+
+# Test imports
+python -c "
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_community.vectorstores import Chroma
+print('✅ All imports successful!')
+"
+```
+
+---
+
+## 🤖 Model Setup by Provider
+
+### 🆓 FREE: Ollama (Recommended for Local)
+
+#### 1. Install Ollama
+
+**macOS:**
+```bash
+brew install ollama
+# OR download from https://ollama.ai/download/mac
+```
+
+**Linux:**
+```bash
+curl -fsSL https://ollama.ai/install.sh | sh
+```
+
+**Windows:**
+- Download from https://ollama.ai/download/windows
+- Run the installer
+
+#### 2. Download Models
+
+```bash
+# Required: Embedding model
 ollama pull nomic-embed-text
 
-# Run
-python rag_complete.py /path/to/documents
-# Select "1" for FREE models, then "1" for Ollama
+# Choose ONE LLM model:
+ollama pull llama3.2      # Fast, lightweight (2GB)
+ollama pull mistral       # Balanced (4GB)
+ollama pull llama3.1:8b   # Best quality (5GB)
+ollama pull phi3          # Efficient (2.3GB)
 ```
 
-### Option 3: Premium API Models
+#### 3. Verify Ollama
 
 ```bash
-# Install API client for your provider
-pip install langchain-openai      # For OpenAI
-pip install langchain-anthropic   # For Anthropic  
-pip install langchain-google-genai # For Google
+# Check installed models
+ollama list
 
-# Run
-python rag_complete.py /path/to/documents
-# Select provider (2-5) and enter API key when prompted
+# Expected output:
+# NAME                ID          SIZE
+# nomic-embed-text    ...         274 MB
+# llama3.2            ...         2.0 GB
 ```
 
-## 🎯 Detailed Setup by Provider
+---
 
-### 🆓 FREE Models
+### 🆓 FREE: HuggingFace (No Installation Required)
 
-#### HuggingFace (No Installation Required!)
 ```bash
-pip install transformers sentence-transformers torch
+# Install HuggingFace dependencies
+pip install transformers torch sentence-transformers langchain-huggingface
 
-# That's it! Models download automatically on first use
+# Models download automatically on first use!
+# No additional setup needed.
 ```
 
 **Available Models:**
-- Microsoft Phi-2 (2.7B) - Fast
-- Mistral-7B - Balanced
-- Llama-2-7B - Quality (needs HF token)
+- `microsoft/phi-2` - Fast, efficient (2.7B parameters)
+- `mistralai/Mistral-7B-v0.1` - Balanced quality
+- `meta-llama/Llama-2-7b-hf` - Requires HF token
 
-#### Ollama (Requires Installation)
+---
+
+### 💰 PREMIUM: OpenAI
+
+#### 1. Get API Key
+- Go to https://platform.openai.com/api-keys
+- Create new secret key
+- Copy and save securely
+
+#### 2. Install Package
 ```bash
-# Install from https://ollama.ai
-# Then:
-ollama pull llama3.2
-ollama pull mistral
-ollama pull phi3
+pip install langchain-openai openai
 ```
 
-### 💰 Commercial Models
-
-#### OpenAI Setup
-1. Get API key from: https://platform.openai.com/api-keys
-2. Install: `pip install langchain-openai openai`
-3. Usage:
-```python
-config = ModelConfigurations.OPENAI_GPT35
-config.api_key = "your-api-key"
-```
-
-#### Anthropic Claude Setup
-1. Get API key from: https://console.anthropic.com/
-2. Install: `pip install langchain-anthropic anthropic`
-3. Usage:
-```python
-config = ModelConfigurations.ANTHROPIC_HAIKU  # Cheapest
-# or
-config = ModelConfigurations.ANTHROPIC_SONNET  # Best value
-config.api_key = "your-api-key"
-```
-
-#### Google Gemini Setup
-1. Get API key from: https://makersuite.google.com/app/apikey
-2. Install: `pip install langchain-google-genai google-generativeai`
-3. Usage:
-```python
-config = ModelConfigurations.GOOGLE_GEMINI_FLASH  # Ultra-cheap!
-config.api_key = "your-api-key"
-```
-
-## 📱 Streamlit Web UI
-
-### Basic Usage
+#### 3. Configure
 ```bash
-# Install Streamlit
-pip install streamlit
+# Option A: Environment variable
+export OPENAI_API_KEY="sk-..."
 
-# Run the universal app
-streamlit run app_universal.py
+# Option B: .env file
+echo 'OPENAI_API_KEY=sk-...' >> .env
+
+# Option C: In code (when prompted)
 ```
 
-### Features:
-- ✅ Switch between models without restarting
-- ✅ Real-time cost tracking
-- ✅ API key management
-- ✅ Side-by-side model comparison
-- ✅ Export conversation history
+**Available Models:**
+| Model | Cost/1K Input | Cost/1K Output | Quality |
+|-------|---------------|----------------|---------|
+| gpt-3.5-turbo | $0.0005 | $0.0015 | ⭐⭐⭐⭐ |
+| gpt-4-turbo | $0.01 | $0.03 | ⭐⭐⭐⭐⭐ |
+| gpt-4o | $0.005 | $0.015 | ⭐⭐⭐⭐⭐ |
 
-## 💡 Usage Patterns & Best Practices
+---
 
-### Development Workflow
-```python
-# 1. Start with FREE models for development
-rag = UniversalRAG(
-    documents_path="./docs",
-    model_config=ModelConfigurations.HUGGINGFACE_PHI
-)
+### 💰 PREMIUM: Anthropic Claude
 
-# 2. Test with cheap API for quality check
-rag.switch_model(ModelConfigurations.GOOGLE_GEMINI_FLASH)  # $0.000075/1K
+#### 1. Get API Key
+- Go to https://console.anthropic.com/
+- Create API key
+- Copy and save securely
 
-# 3. Use premium only when needed
-rag.switch_model(ModelConfigurations.OPENAI_GPT4)  # $0.01/1K
-```
-
-### Cost Optimization Strategy
-
-1. **Development**: Use FREE local models
-2. **Testing**: Use Gemini Flash ($0.000075/1K) or Claude Haiku ($0.00025/1K)
-3. **Production**: 
-   - Standard: GPT-3.5 ($0.0005/1K)
-   - Premium: Claude Sonnet ($0.003/1K) or GPT-4o ($0.005/1K)
-   - Ultimate: Claude Opus ($0.015/1K) or GPT-4 Turbo ($0.01/1K)
-
-### Hybrid Approach (Recommended)
-```python
-# Use free model for simple queries
-simple_rag = UniversalRAG(
-    documents_path="./docs",
-    model_config=ModelConfigurations.HUGGINGFACE_PHI
-)
-
-# Use premium for complex queries only
-complex_rag = UniversalRAG(
-    documents_path="./docs",
-    model_config=ModelConfigurations.ANTHROPIC_SONNET
-)
-
-# Route based on query complexity
-if is_simple_question(query):
-    result = simple_rag.query(query)  # FREE
-else:
-    result = complex_rag.query(query)  # PAID
-```
-
-## 🔧 Environment Variables
-
-Create a `.env` file for API keys:
+#### 2. Install Package
 ```bash
-# .env file
+pip install langchain-anthropic anthropic
+```
+
+#### 3. Configure
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+**Available Models:**
+| Model | Cost/1K Input | Cost/1K Output | Quality |
+|-------|---------------|----------------|---------|
+| claude-3-haiku | $0.00025 | $0.00125 | ⭐⭐⭐⭐ |
+| claude-3.5-sonnet | $0.003 | $0.015 | ⭐⭐⭐⭐⭐ |
+| claude-3-opus | $0.015 | $0.075 | ⭐⭐⭐⭐⭐ |
+
+---
+
+### 💰 PREMIUM: Google Gemini
+
+#### 1. Get API Key
+- Go to https://makersuite.google.com/app/apikey
+- Create API key
+- Copy and save securely
+
+#### 2. Install Package
+```bash
+pip install langchain-google-genai google-generativeai
+```
+
+#### 3. Configure
+```bash
+export GOOGLE_API_KEY="AIza..."
+```
+
+**Available Models:**
+| Model | Cost/1K Input | Cost/1K Output | Quality |
+|-------|---------------|----------------|---------|
+| gemini-1.5-flash | $0.000075 | $0.0003 | ⭐⭐⭐⭐ |
+| gemini-1.5-pro | $0.00125 | $0.005 | ⭐⭐⭐⭐⭐ |
+
+---
+
+## ▶️ Running the Application
+
+### Web UI (Streamlit)
+
+```bash
+# Start the web interface
+streamlit run rag_app.py
+
+# Opens automatically at http://localhost:8501
+```
+
+**Web UI Features:**
+- Model selection dropdown
+- Real-time parameter adjustment
+- Cost tracking display
+- Document folder browser
+- Chat history
+
+### Command Line Interface
+
+```bash
+# Basic usage
+python rag.py /path/to/your/documents
+```
+
+**CLI Commands:**
+```
+temp <value>    → Change temperature (0.0-1.0)
+tokens <value>  → Change max tokens (1-8192)
+k <value>       → Change sources/chunks (1-20)
+params          → Show current parameters
+cost            → Show total session cost
+help            → Show available commands
+exit            → Quit application
+```
+
+---
+
+## ⚙️ Configuration Options
+
+### Dynamic Parameters (Runtime Adjustable)
+
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| `temperature` | 0.5 | 0.0-1.0 | Response creativity |
+| `max_tokens` | 2000 | 256-8192 | Max response length |
+| `k` | 3 | 1-20 | Number of source chunks |
+
+### Fixed Parameters (Set at Initialization)
+
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| `chunk_size` | 1000 | 200-2000 | Text chunk size |
+| `chunk_overlap` | 200 | 0-500 | Overlap between chunks |
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```bash
+# API Keys (only needed for premium models)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 GOOGLE_API_KEY=AIza...
-COHERE_API_KEY=...
-MISTRAL_API_KEY=...
-VOYAGE_API_KEY=...  # For Anthropic embeddings
+
+# Optional settings
+CHROMA_TELEMETRY=false
+ANONYMIZED_TELEMETRY=false
 ```
 
-Load in Python:
-```python
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-config = ModelConfigurations.OPENAI_GPT35
-config.api_key = os.getenv("OPENAI_API_KEY")
-```
-
-## 📈 Performance Tips
-
-### For FREE Models
-- Use GPU if available (10x faster)
-- Enable 8-bit quantization to reduce memory
-- Use smaller models for simple tasks
-
-### For API Models
-- Batch similar queries
-- Cache common responses
-- Use cheaper models first, escalate only if needed
-
-### Vector Store Optimization
-- Pre-process documents once
-- Reuse vector store across sessions
-- Adjust chunk_size based on document type
+---
 
 ## 🐛 Troubleshooting
 
-### Issue: "Out of Memory" with Free Models
-```python
-# Solution 1: Use smaller model
-config = ModelConfigurations.HUGGINGFACE_PHI  # 2.7B instead of 7B
+### Common Issues
 
-# Solution 2: Enable quantization
-rag = UniversalRAG(
-    documents_path="./docs",
-    model_config=config,
-    use_quantization=True  # Reduces memory by 50%
-)
+#### "Ollama not found"
+```bash
+# Verify Ollama is installed
+ollama --version
+
+# Start Ollama service
+ollama serve
+
+# If not installed, download from https://ollama.ai
 ```
 
-### Issue: "API Key Invalid"
-```python
-# Verify key format
-print(f"Key starts with: {config.api_key[:10]}...")
-print(f"Key length: {len(config.api_key)}")
+#### "Model not found"
+```bash
+# List available models
+ollama list
 
-# Test with simple call
-from openai import OpenAI
-client = OpenAI(api_key=config.api_key)
-response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[{"role": "user", "content": "Hello"}]
-)
+# Pull missing model
+ollama pull llama3.2
+ollama pull nomic-embed-text
 ```
 
-### Issue: "Slow Performance"
+#### "Out of memory"
 ```python
-# Reduce chunk size for faster processing
+# Use smaller model
+config = ModelConfigurations.OLLAMA_LLAMA  # 2GB instead of 5GB
+
+# Reduce chunk size
 rag = UniversalRAG(
     documents_path="./docs",
     model_config=config,
     chunk_size=500,  # Smaller chunks
-    chunk_overlap=50  # Less overlap
+    chunk_overlap=50
 )
 
-# Use fewer retrieved chunks
-result = rag.query(question, k=2)  # Only 2 chunks instead of default 3
+# Use fewer sources
+rag.update_k(2)  # Instead of default 3
 ```
 
-## 📊 Cost Monitoring
+#### "API key invalid"
+```bash
+# Check key format
+echo $OPENAI_API_KEY | head -c 10  # Should start with "sk-"
 
-### Track costs in code:
-```python
-rag = UniversalRAG(documents_path="./docs", model_config=config)
-rag.initialize()
-
-# After queries
-total_cost = rag.get_total_cost()
-print(f"Session cost: ${total_cost:.6f}")
-
-# Per query cost
-result = rag.query("What is the main topic?")
-print(f"Query cost: ${result['estimated_cost']:.6f}")
-```
-
-### Set cost limits:
-```python
-MAX_COST = 1.00  # $1 limit
-
-if rag.get_total_cost() > MAX_COST:
-    print("Cost limit reached! Switching to free model...")
-    rag.switch_model(ModelConfigurations.HUGGINGFACE_PHI)
-```
-
-## 🎯 Model Selection Guide
-
-### By Use Case
-
-**Customer Support Bot:**
-- Dev: HuggingFace Phi-2 (FREE)
-- Prod: Claude Haiku ($0.00025/1K)
-
-**Legal Document Analysis:**
-- Dev: Ollama Mistral (FREE)
-- Prod: Claude Sonnet ($0.003/1K) or GPT-4 ($0.01/1K)
-
-**Research Assistant:**
-- Dev: Ollama Llama 3.2 (FREE)
-- Prod: GPT-4o ($0.005/1K)
-
-**Simple Q&A:**
-- All stages: Gemini Flash ($0.000075/1K) - So cheap it's almost free!
-
-### By Budget
-
-**$0/month:** Use only free models
-**<$1/month:** Gemini Flash for everything
-**<$5/month:** Mix of Gemini Flash + Claude Haiku
-**<$20/month:** GPT-3.5 for most, Claude Sonnet for complex
-**<$50/month:** Claude Sonnet as primary
-**Unlimited:** GPT-4 Turbo or Claude Opus
-
-## 🚀 Production Deployment
-
-### Docker Deployment
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-
-COPY requirements_universal.txt .
-RUN pip install -r requirements_universal.txt
-
-# Install specific providers
-RUN pip install langchain-openai langchain-anthropic langchain-google-genai
-
-COPY . .
-
-CMD ["streamlit", "run", "app_universal.py", "--server.port=8501"]
-```
-
-### Environment-based Configuration
-```python
+# Verify in Python
+python -c "
 import os
-
-def get_model_config():
-    env = os.getenv("ENVIRONMENT", "development")
-    
-    if env == "development":
-        return ModelConfigurations.HUGGINGFACE_PHI  # FREE
-    elif env == "staging":
-        return ModelConfigurations.GOOGLE_GEMINI_FLASH  # Ultra-cheap
-    elif env == "production":
-        config = ModelConfigurations.ANTHROPIC_SONNET
-        config.api_key = os.getenv("ANTHROPIC_API_KEY")
-        return config
+key = os.getenv('OPENAI_API_KEY', '')
+print(f'Key length: {len(key)}')
+print(f'Starts with: {key[:7]}...')
+"
 ```
 
-## 📝 License & Support
+#### "Import errors"
+```bash
+# Reinstall core packages
+pip install --upgrade langchain langchain-core langchain-community
 
-- Free models: No license required
-- API models: Check provider's terms
-- Code: MIT License
+# Check versions
+pip list | grep langchain
+```
 
-For issues or questions, check the provider-specific documentation:
-- OpenAI: https://platform.openai.com/docs
-- Anthropic: https://docs.anthropic.com
-- Google: https://ai.google.dev/docs
-- HuggingFace: https://huggingface.co/docs
+#### "ChromaDB errors"
+```bash
+# Clear existing database
+rm -rf ./chroma_db
+
+# Reinstall ChromaDB
+pip install --upgrade chromadb
+```
+
+### Performance Issues
+
+#### Slow Responses
+1. Use faster model (`llama3.2` instead of `llama3.1:8b`)
+2. Reduce `k` value (fewer source chunks)
+3. Reduce `chunk_size` (smaller context)
+4. Use GPU if available
+
+#### High Memory Usage
+1. Use quantized models
+2. Reduce batch size
+3. Close other applications
+4. Use smaller model
 
 ---
 
-**Remember:** Start FREE, upgrade only when needed! 🎉
+## 📞 Getting Help
+
+If you encounter issues not covered here:
+
+1. Review provider documentation:
+   - [LangChain Docs](https://python.langchain.com/docs/)
+   - [Ollama Docs](https://ollama.ai/docs)
+   - [OpenAI Docs](https://platform.openai.com/docs)
+   - [Anthropic Docs](https://docs.anthropic.com)
+   - [Google AI Docs](https://ai.google.dev/docs)
+
+---
+
+## ✅ Setup Checklist
+
+- [ ] Python 3.11 installed
+- [ ] Environment created and activated
+- [ ] Core packages installed
+- [ ] Model provider configured (Ollama/HuggingFace/API)
+- [ ] Models downloaded (for Ollama)
+- [ ] API keys set (for premium models)
+- [ ] Test import successful
+- [ ] Application runs without errors
+
+---
+
+**🎉 Setup complete! Start with FREE local models and upgrade only when needed.**
